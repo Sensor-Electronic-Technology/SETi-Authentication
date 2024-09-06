@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>SETiAuth.Domain.Shared</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Andrew Elmendorf</Authors>
+        <Company>Sensor Electronic Technology</Company>
+        <PackageDescription>Shared data for authentication</PackageDescription>
+        <RepositoryUrl>https://github.com/Sensor-Electronic-Technology/SETi-Authentication</RepositoryUrl>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <UserSecretsId>0ac910fd-e24d-4f50-aa6e-e94ce3d37af0</UserSecretsId>
+  </PropertyGroup>
+</Project>
