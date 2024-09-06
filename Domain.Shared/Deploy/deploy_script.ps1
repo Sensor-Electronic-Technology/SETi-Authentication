@@ -21,7 +21,7 @@ switch ($type) {
 
 $newversionNumber = $major.ToString() + "." + $minor.ToString() + "." + $patch.ToString()
 "New version number is " + $newversionNumber
-$outputPath=$env:USERPROFILE+"\RiderProjects\SetiAuthentication\Domain.Shared\bin\Release\Domain.Shared." + $newversionNumber + ".nupkg"
+$outputPath=$env:USERPROFILE+"\RiderProjects\SetiAuthentication\Domain.Shared\bin\Release\SETiAuth.Domain.Shared." + $newversionNumber + ".nupkg"
 $csprojcontents.Project.PropertyGroup.Version = $newversionNumber
 $csprojcontents.Save($csprojfilename)
 dotnet pack $csprojfilename --configuration Release
