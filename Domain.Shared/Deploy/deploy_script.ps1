@@ -18,7 +18,7 @@ switch ($type) {
     1 { $minor = $minor + 1 }
     2 { $major = $major + 1 }
 }
-
+dotnet build $csprojfilename --configuration Release
 $newversionNumber = $major.ToString() + "." + $minor.ToString() + "." + $patch.ToString()
 "New version number is " + $newversionNumber
 $outputPath=$env:USERPROFILE+"\RiderProjects\SetiAuthentication\Domain.Shared\bin\Release\SETiAuth.Domain.Shared." + $newversionNumber + ".nupkg"

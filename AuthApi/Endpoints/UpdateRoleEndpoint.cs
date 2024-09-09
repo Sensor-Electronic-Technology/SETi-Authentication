@@ -1,24 +1,23 @@
 using System.Text;
-using Domain.Shared.Constants;
-using Domain.Shared.Contracts;
-using Domain.Shared.Contracts.Requests;
-using Domain.Shared.Contracts.Responses;
+using SETiAuth.Domain.Shared.Contracts;
 using FastEndpoints;
 using Infrastructure.Services;
+using SETiAuth.Domain.Shared.Constants;
+using SETiAuth.Domain.Shared.Contracts.Requests;
+using SETiAuth.Domain.Shared.Contracts.Responses;
 
 namespace AuthApi.Endpoints;
 
 public class UpdateRoleEndpoint:Endpoint<UpdateRoleRequest,UpdateRoleResponse> {
-    private readonly AuthDataService _authDataService;
+    private readonly AuthDataService _dataService;
     private readonly ILogger<UpdateRoleEndpoint> _logger;
     
-    public UpdateRoleEndpoint(AuthDataService authDataService,ILogger<UpdateRoleEndpoint> logger) {
-        _authDataService = authDataService;
+    public UpdateRoleEndpoint(AuthDataService dataService,ILogger<UpdateRoleEndpoint> logger) {
+        _dataService = dataService;
         this._logger = logger;
     }
     
     public override void Configure() {
-        //Put("/api/email/update");
         Put($"/api/{HttpClientConstants.UpdateRoleEndpoint}");
         AllowAnonymous();
     }
@@ -31,7 +30,7 @@ public class UpdateRoleEndpoint:Endpoint<UpdateRoleRequest,UpdateRoleResponse> {
             },cancellation:ct);
             return;
         }
-        var result = await _authDataService.UpdateUserRole(req.Username,req.AuthDomain,req.Role,req.IsDomainAccount);
+        var result = await this._dataService.UpdateUserRole(req.Username,req.AuthDomain,req.Role,req.IsDomainAccount);
         await SendAsync(new UpdateRoleResponse() {
             Success = !result.IsError,
             Message = !result.IsError ? "Role updated": result.FirstError.Description

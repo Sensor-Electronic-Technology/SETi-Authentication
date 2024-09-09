@@ -1,6 +1,6 @@
-﻿using Domain.Shared.Authentication;
+﻿using SETiAuth.Domain.Shared.Authentication;
 
-namespace Domain.Shared.Contracts.Responses;
+namespace SETiAuth.Domain.Shared.Contracts.Responses;
 
 public class LoginResponse {
     public UserSessionDto? UserSession { get; set; }

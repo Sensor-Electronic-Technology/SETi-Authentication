@@ -3,13 +3,15 @@
 namespace Domain.Authentication;
 
 public class UserAccount {
-    public ObjectId _id { get; set; }
-    public string Username { get; set; }
+    //public ObjectId _id { get; set; }
+    public string _id { get; set; }
     public string Email { get; set; }
     public bool IsDomainAccount { get; set; }
 }
 
 public class DomainUserAccount : UserAccount {
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
     public Dictionary<string, string> AuthDomainRoles { get; set; } = [];
 }
 

@@ -1,4 +1,4 @@
-﻿namespace Domain.Shared.Constants;
+﻿namespace SETiAuth.Domain.Shared.Constants;
 
 public static class HttpClientConstants {
     //public static string LoginApiUrl = "http://localhost:5243/api/";
@@ -6,6 +6,8 @@ public static class HttpClientConstants {
     
     public static string LoginEndpoint => "login";
     public static string LogoutEndpoint=> "logout";
+    public static string CreateAuthDomainEndpoint => "auth-domain/create";
+    public static string UpdateAuthDomainEndpoint => "auth-domain/update";
     public static string UpdateEmailEndpoint=> "account/email/update";
     public static string UpdateRoleEndpoint => "account/role/update";
     public static string CreateAccountEndpoint => "account/create";

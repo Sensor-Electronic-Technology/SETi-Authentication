@@ -1,4 +1,4 @@
-﻿namespace Domain.Shared.Contracts.Requests;
+﻿namespace SETiAuth.Domain.Shared.Contracts.Requests;
 
 public class CreateAccountRequest {
     public string? Username { get; set; }

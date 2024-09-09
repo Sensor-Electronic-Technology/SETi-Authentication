@@ -1,9 +1,9 @@
-﻿using Domain.Shared.Constants;
-using Domain.Shared.Contracts;
-using Domain.Shared.Contracts.Requests;
-using Domain.Shared.Contracts.Responses;
+﻿using SETiAuth.Domain.Shared.Contracts;
 using FastEndpoints;
 using Infrastructure.Services;
+using SETiAuth.Domain.Shared.Constants;
+using SETiAuth.Domain.Shared.Contracts.Requests;
+using SETiAuth.Domain.Shared.Contracts.Responses;
 
 namespace AuthApi.Endpoints;
 

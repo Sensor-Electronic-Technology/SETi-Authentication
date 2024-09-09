@@ -3,28 +3,78 @@
 //await CreateSettings();
 //await RoleAccountTesting();
 
+using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Domain.Authentication;
 using Domain.Settings;
-using Domain.Shared.Authentication;
-using Domain.Shared.Constants;
-using Domain.Shared.Contracts;
-using Domain.Shared.Contracts.Requests;
-using Domain.Shared.Contracts.Responses;
+using SETiAuth.Domain.Shared.Contracts;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Effortless.Net.Encryption;
+using SETiAuth.Domain.Shared.Authentication;
+using SETiAuth.Domain.Shared.Constants;
+using SETiAuth.Domain.Shared.Contracts.Requests;
+using SETiAuth.Domain.Shared.Contracts.Responses;
 
 
 //await TestLogin();
 //await TestLogout();
-await CreateLocalUser();
-Console.WriteLine("Press any key to test decryption");
-Console.ReadKey();
-await TestLocalUserDecryption();
+//await CreateLocalUser();
+//Console.WriteLine("Press any key to test decryption");
+//Console.ReadKey();
+//await TestLocalUserDecryption();
 //await CreateAuthDomains();
+//TestCreateOrgUnit();
+//AddUserToGroup();
+//RemoveUserFromGroup();
+//GetUserRoles();
+//RemoveUserFromAll();
+//await CreateLdapSettings();
+
+//ExportSetiUsers();
+await CreateUsers();
+
+async Task CreateUsers() {
+	var client=new MongoClient("mongodb://172.20.3.41:27017");
+	var database=client.GetDatabase("auth_db");
+	var collection=database.GetCollection<DomainUserAccount>("domain_accounts");
+	var lines=File.ReadAllLines(@"C:\Users\aelmendo\Documents\UserData\users.csv");
+	foreach (var line in lines) {
+		var values=line.Split(',');
+		DomainUserAccount account = new DomainUserAccount();
+		account._id = values[0].ToLower();
+		account.Email = values[2];
+		account.FirstName = values[3];
+		account.LastName = values[4];
+		account.AuthDomainRoles["PurchaseRequestSystem"] = values[5];
+		await collection.InsertOneAsync(account);
+		Console.WriteLine($"Account inserted: {account._id}");
+	}
+}
+
+void ExportSetiUsers() {
+	using PrincipalContext pc = new PrincipalContext(ContextType.Domain, "172.20.3.5",
+		"OU=SETI Users,DC=seti,DC=com",
+		"elmendorfal",
+		"!23seti");
+	UserPrincipal allUsers = new UserPrincipal(pc);
+	PrincipalSearcher ps = new PrincipalSearcher(allUsers);
+	//List<UserPrincipal> users = [];
+	StringBuilder sb = new StringBuilder();
+	sb.AppendLine("SamAccount,DisplayName,EmailAddress,UserPrincipalName,GivenName,Surname");
+	foreach (var principal in ps.FindAll()) {
+		var user = (UserPrincipal)principal;
+		sb.AppendLine($"{user.SamAccountName},{user.DisplayName},{user.EmailAddress},{user.UserPrincipalName},{user.GivenName},{user.Surname}");
+		Console.WriteLine(
+			$"User: {user.SamAccountName} - {user.DisplayName} - {user.EmailAddress} - {user.UserPrincipalName} - {user.GivenName} - {user.Surname}");
+		//users.Add(user);
+	}
+	File.WriteAllText(@"C:\Users\aelmendo\Documents\UserData\users.csv",sb.ToString());
+}
+
 async Task CreateAuthDomains() {
 	/*
 	 * Admin
@@ -36,21 +86,35 @@ async Task CreateAuthDomains() {
 	var client=new MongoClient("mongodb://172.20.3.41:27017");
 	var database=client.GetDatabase("auth_db");
 	var collection=database.GetCollection<AuthDomain>("auth_domains");
-	List<string> roles = ["Admin","User","Purchaser","Approver","Guest"];
-	AuthDomain authDomain = new AuthDomain();
-	authDomain._id=ObjectId.GenerateNewId();
-	authDomain.Name = "PurchaseRequestSystem";
-	authDomain.Roles = roles;
-	authDomain.Description = "Roles for the Purchase Request System";
+	List<string> roles = ["Admin","Approver","Purchaser","Approver","Guest"];
+	AuthDomain authDomain = new AuthDomain { 
+		_id = "PurchaseRequestSystem", 
+		Roles = roles, 
+		Description = "Roles for the Purchase Request System" };
 	await collection.InsertOneAsync(authDomain);
 	Console.WriteLine("AuthDomain created, check database");
+}
+
+async Task CreateLdapSettings() {
+	var client=new MongoClient("mongodb://172.20.3.41:27017");
+	var database=client.GetDatabase("settings_db");
+	var collection=database.GetCollection<LdapSettings>("ldap_settings");
+	LdapSettings settings = new LdapSettings() {
+		HostIp = "172.20.3.5",
+		_id = ObjectId.GenerateNewId(),
+		IsLatest = true,
+		UserName = "elmendorfal",
+		Password = "!23seti",
+		DirectoryLdapPath = "LDAP://172.20.3.5:389/OU=Program Access,OU=Groups,OU=SETI,DC=seti,DC=com",
+	};
+	await collection.InsertOneAsync(settings);
 }
 
 async Task TestLocalUserDecryption() {
 	var client=new MongoClient("mongodb://172.20.3.41:27017");
 	var database=client.GetDatabase("auth_db");
 	var collection=database.GetCollection<LocalUserAccount>("user_accounts");
-	var account=await collection.Find(e=>e.Username=="admin").FirstOrDefaultAsync();
+	var account=await collection.Find(e=>e._id=="admin").FirstOrDefaultAsync();
 	if (account != null) {
 		var decryptedPassword=Strings.Decrypt(account.EncryptedPassword,account.Key, account.IV);
 		Console.WriteLine($"Password: {decryptedPassword}");
@@ -67,7 +131,7 @@ async Task CreateLocalUser() {
 	byte[] iv = Bytes.GenerateIV();
 	
 	LocalUserAccount account = new LocalUserAccount();
-	account.Username = "admin";
+	account._id = "admin";
 	account.Email = "itsupport@s-et.com";
 	account.Role = "Admin";
 	account.IsDomainAccount = false;
@@ -111,7 +175,7 @@ async Task RoleAccountTesting() {
 	var database=client.GetDatabase("auth_db");
 	var collection=database.GetCollection<UserAccount>("user_accounts");
 	UserAccount account = new UserAccount() {
-		Username = "aelmendorf",
+		_id = "aelmendorf",
 		Email = "aelmendorf@seti.com",
 		IsDomainAccount = true
 	};
@@ -122,8 +186,8 @@ async Task RoleAccountTesting() {
 async Task CreateSettings() {
 	var client=new MongoClient("mongodb://172.20.3.41:27017");
 	var database=client.GetDatabase("settings_db");
-	var collection=database.GetCollection<LoginServerSettings>("login_settings");
-	var settings = new LoginServerSettings() {
+	var collection=database.GetCollection<LdapSettings>("login_settings");
+	var settings = new LdapSettings() {
 		HostIp = "172.20.3.5",
 		_id = ObjectId.GenerateNewId(),
 		IsLatest = true,

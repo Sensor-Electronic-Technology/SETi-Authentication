@@ -1,13 +1,13 @@
-﻿using Domain.Shared.Constants;
-using Domain.Shared.Contracts;
-using Domain.Shared.Contracts.Requests;
+﻿using SETiAuth.Domain.Shared.Contracts;
 using FastEndpoints;
 using Infrastructure.Services;
 using MongoDB.Bson;
+using SETiAuth.Domain.Shared.Constants;
+using SETiAuth.Domain.Shared.Contracts.Requests;
 
 namespace AuthApi.Endpoints;
 
-public class LogoutEndpoint:Endpoint<LogoutRequest,EmptyResponse> {
+/*public class LogoutEndpoint:Endpoint<LogoutRequest,EmptyResponse> {
     private readonly AuthService _authService;
     private readonly ILogger<LogoutEndpoint> _logger;
     
@@ -31,4 +31,4 @@ public class LogoutEndpoint:Endpoint<LogoutRequest,EmptyResponse> {
         }
     }
     
-}
+}*/

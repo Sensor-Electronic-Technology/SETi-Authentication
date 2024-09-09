@@ -1,4 +1,4 @@
-﻿namespace Domain.Shared.Contracts.Requests;
+﻿namespace SETiAuth.Domain.Shared.Contracts.Requests;
 
 public class UpdateEmailRequest {
     public string Username { get; set; }

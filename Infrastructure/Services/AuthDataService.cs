@@ -1,11 +1,11 @@
 ﻿using Domain.Authentication;
 using Domain.Settings;
-using Domain.Shared.Authentication;
 using Effortless.Net.Encryption;
 using ErrorOr;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using SETiAuth.Domain.Shared.Authentication;
 
 namespace Infrastructure.Services;
 
@@ -25,7 +25,7 @@ public class AuthDataService {
 
     public async Task<ErrorOr<Success>> CreateAccount(string username, string email, string role, 
         string authDomain, bool isDomainAccount, string? password=default) {
-        var domain=await this._domainCollection.Find(d=>d.Name==authDomain).FirstOrDefaultAsync();
+        var domain=await this._domainCollection.Find(d=>d._id==authDomain).FirstOrDefaultAsync();
         if (domain == null) {
             return Error.NotFound(description:"Auth Domain not found");
         }
@@ -33,13 +33,12 @@ public class AuthDataService {
             return Error.NotFound(description:"Role not found in Auth Domain");
         }
         if (isDomainAccount) {
-            var userAccount = await this._domainAccountCollection.Find(u => u.Username == username)
+            var userAccount = await this._domainAccountCollection.Find(u => u._id == username)
                 .FirstOrDefaultAsync();
             if (userAccount is null) {
                 //Create Account
                 DomainUserAccount account = new DomainUserAccount {
-                    _id = ObjectId.GenerateNewId(),
-                    Username = username,
+                    _id = username,
                     Email = email,
                     IsDomainAccount = true,
                     AuthDomainRoles = new Dictionary<string, string>() {
@@ -47,12 +46,12 @@ public class AuthDataService {
                     }
                 };
                 await this._domainAccountCollection.InsertOneAsync(account);
-                var createdAccount=await this._domainAccountCollection.Find(e=>e.Username==username)
+                var createdAccount=await this._domainAccountCollection.Find(e=>e._id==username)
                     .FirstOrDefaultAsync();
                 return createdAccount!=null ? Result.Success : Error.Unexpected(description:"Account not created");
             } else {
                 userAccount.AuthDomainRoles[authDomain]=role;
-                var filter=Builders<DomainUserAccount>.Filter.Eq(u => u.Username, username);
+                var filter=Builders<DomainUserAccount>.Filter.Eq(u => u._id, username);
                 var update=Builders<DomainUserAccount>.Update.Set(u => u.AuthDomainRoles, userAccount.AuthDomainRoles);
                 var result=await this._domainAccountCollection.UpdateOneAsync(filter, update);
                 return result.IsAcknowledged && result.ModifiedCount>0 ? Result.Success : Error.Unexpected(description:"Account not updated");
@@ -61,8 +60,7 @@ public class AuthDataService {
             byte[] key = Bytes.GenerateKey();
             byte[] iv = Bytes.GenerateIV();
             LocalUserAccount account = new LocalUserAccount() {
-                _id = ObjectId.GenerateNewId(),
-                Username = username,
+                _id = username,
                 Email = email,
                 Role = role,
                 IsDomainAccount = false,
@@ -72,19 +70,19 @@ public class AuthDataService {
                 EncryptedPassword=Strings.Encrypt(password,key, iv)
             };
             await this._localUserAccountCollection.InsertOneAsync(account);
-            var createdAccount=await this._localUserAccountCollection.Find(e=>e.Username==username).FirstOrDefaultAsync();
+            var createdAccount=await this._localUserAccountCollection.Find(e=>e._id==username).FirstOrDefaultAsync();
             return createdAccount!=null ? Result.Success : Error.Unexpected(description:"Account not created");
         }
     }
     
     public async Task<bool> LocalUserExists(string username,string authDomain) {
-        var userAccount = await this._localUserAccountCollection.Find(u => u.Username == username && u.AuthDomain==authDomain)
+        var userAccount = await this._localUserAccountCollection.Find(u => u._id == username && u.AuthDomain==authDomain)
             .FirstOrDefaultAsync();
         return userAccount != null;
     }
     
     public async Task<ErrorOr<UserSessionDto>> LoginDomainAccount(string username,string authDomain) {
-        var userAccount = await this._domainAccountCollection.Find(u => u.Username == username).FirstOrDefaultAsync();
+        var userAccount = await this._domainAccountCollection.Find(u => u._id == username).FirstOrDefaultAsync();
         if (userAccount == null) {
             return Error.NotFound(description:"User Account not found");
         }
@@ -93,7 +91,7 @@ public class AuthDataService {
         }
         var userSession = new UserSession {
             _id=ObjectId.GenerateNewId(),
-            Username = userAccount.Username,
+            Username = userAccount._id,
             Role = role,
             LoginTime = DateTime.Now
         };
@@ -107,7 +105,7 @@ public class AuthDataService {
     }
 
     public async Task<ErrorOr<UserSessionDto>> LoginLocalUserAccount(string username,string password,string authDomain) {
-        var userAccount = await this._localUserAccountCollection.Find(u => u.Username == username && u.AuthDomain==authDomain)
+        var userAccount = await this._localUserAccountCollection.Find(u => u._id == username && u.AuthDomain==authDomain)
             .FirstOrDefaultAsync();
         if (userAccount == null) {
             return Error.NotFound(description:"User Account not found");
@@ -118,7 +116,7 @@ public class AuthDataService {
         }
         var userSession = new UserSession {
             _id=ObjectId.GenerateNewId(),
-            Username = userAccount.Username,
+            Username = userAccount._id,
             Role = userAccount.Role,
             LoginTime = DateTime.Now
         };
@@ -133,13 +131,13 @@ public class AuthDataService {
 
     public async Task<bool> UpdateUserEmail(string username,string email,bool isDomainAccount,string? authDomain=default) {
         if (isDomainAccount) {
-            var filter=Builders<DomainUserAccount>.Filter.Eq(u => u.Username, username);
+            var filter=Builders<DomainUserAccount>.Filter.Eq(u => u._id, username);
             var update=Builders<DomainUserAccount>.Update.Set(u => u.Email, email);
             var result=await this._domainAccountCollection.UpdateOneAsync(filter, update);
             return result.IsAcknowledged && result.ModifiedCount>0;
         } else {
             var filter=Builders<LocalUserAccount>.Filter.And(
-                    Builders<LocalUserAccount>.Filter.Eq(e=>e.Username, username),
+                    Builders<LocalUserAccount>.Filter.Eq(e=>e._id, username),
                     Builders<LocalUserAccount>.Filter.Eq(e=>e.AuthDomain, authDomain));
             var update=Builders<LocalUserAccount>.Update.Set(u => u.Email, email);
             var result=await this._localUserAccountCollection.UpdateOneAsync(filter, update);
@@ -148,7 +146,7 @@ public class AuthDataService {
     }
     
     public async Task<ErrorOr<Success>> UpdateUserRole(string username,string authDomain,string role,bool isDomainAccount) {
-        var domain=await this._domainCollection.Find(d=>d.Name==authDomain).FirstOrDefaultAsync();
+        var domain=await this._domainCollection.Find(d=>d._id==authDomain).FirstOrDefaultAsync();
         if (domain == null) {
             return Error.NotFound(description:"Auth Domain not found");
         }
@@ -156,23 +154,23 @@ public class AuthDataService {
             return Error.NotFound(description:"Role not found in Auth Domain");
         }
         if (isDomainAccount) {
-            var userAccount = await this._domainAccountCollection.Find(u => u.Username == username).FirstOrDefaultAsync();
+            var userAccount = await this._domainAccountCollection.Find(u => u._id == username).FirstOrDefaultAsync();
             if (userAccount == null) {
                 return Error.NotFound(description:"UserAccount not found");
             }
             userAccount.AuthDomainRoles[authDomain]=role;
-            var filter=Builders<DomainUserAccount>.Filter.Eq(u => u.Username, username);
+            var filter=Builders<DomainUserAccount>.Filter.Eq(u => u._id, username);
             var update=Builders<DomainUserAccount>.Update.Set(u => u.AuthDomainRoles, userAccount.AuthDomainRoles);
             var result=await this._domainAccountCollection.UpdateOneAsync(filter, update);
             return result.IsAcknowledged && result.ModifiedCount>0 ? Result.Success : Error.Unexpected(description:"Save Error, Account not updated");
         } else {
-            var userAccount=await this._localUserAccountCollection.Find(u => u.Username == username && u.AuthDomain==authDomain)
+            var userAccount=await this._localUserAccountCollection.Find(u => u._id == username && u.AuthDomain==authDomain)
                 .FirstOrDefaultAsync();
             if (userAccount == null) {
                 return Error.NotFound(description:"UserAccount not found");
             }
             var filter=Builders<LocalUserAccount>.Filter.And(
-                Builders<LocalUserAccount>.Filter.Eq(e=>e.Username, username),
+                Builders<LocalUserAccount>.Filter.Eq(e=>e._id, username),
                 Builders<LocalUserAccount>.Filter.Eq(e=>e.AuthDomain, authDomain));
             var update=Builders<LocalUserAccount>.Update.Set(u => u.Role, role);
             var result=await this._localUserAccountCollection.UpdateOneAsync(filter, update);
@@ -180,9 +178,31 @@ public class AuthDataService {
         }
     }
     
-    public async Task Logout(ObjectId token) {
+    public async Task<ErrorOr<Success>> CreateAuthDomain(string name,string? description,List<string> roles) {
+        var existingDomain=await this._domainCollection.Find(e=>e._id==name).FirstOrDefaultAsync();
+        if (existingDomain != null) {
+            return Error.Conflict(description:$"AuthDoman {name} already exists");
+        }
+        AuthDomain domain = new AuthDomain() {
+            _id = name,
+            Description = description,
+            Roles = roles
+        };
+        await this._domainCollection.InsertOneAsync(domain);
+        var createdDomain=await this._domainCollection.Find(e=>e._id==domain._id).FirstOrDefaultAsync();
+        return createdDomain!=null ? Result.Success : Error.Unexpected(description:"Database error, AuthDomain not created");
+    }
+    
+    public async Task<bool> UpdateAuthDomain(string name,string? description,List<string> roles) {
+        var filter=Builders<AuthDomain>.Filter.Eq(d => d._id, name);
+        var update=Builders<AuthDomain>.Update.Set(d => d.Description, description).Set(d => d.Roles, roles);
+        var result=await this._domainCollection.UpdateOneAsync(filter, update);
+        return result.IsAcknowledged && result.ModifiedCount>0;
+    }
+    
+    /*public async Task Logout(ObjectId token) {
         var filter=Builders<UserSession>.Filter.Eq(s => s._id, token);
         var update=Builders<UserSession>.Update.Set(s => s.LogoutTime, DateTime.Now);
         await this._userSessionCollection.UpdateOneAsync(filter, update);
-    }
+    }*/
 }

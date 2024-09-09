@@ -1,4 +1,4 @@
-﻿namespace Domain.Shared.Authentication;
+﻿namespace SETiAuth.Domain.Shared.Authentication;
 
 public class UserSessionDto {
     public string Token { get; set; }

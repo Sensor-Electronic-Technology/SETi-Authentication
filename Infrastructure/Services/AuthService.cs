@@ -1,29 +1,35 @@
-﻿using System.DirectoryServices.AccountManagement;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.DirectoryServices.AccountManagement;
+using Domain.Authentication;
 using Domain.Settings;
-using Domain.Shared.Authentication;
-using Domain.Shared.Contracts.Requests;
-using Domain.Shared.Contracts.Responses;
 using ErrorOr;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using SETiAuth.Domain.Shared.Authentication;
+using SETiAuth.Domain.Shared.Contracts.Requests;
+using SETiAuth.Domain.Shared.Contracts.Responses;
 
 namespace Infrastructure.Services;
 
+[SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
 public class AuthService {
-    private readonly SettingsService _settingsService;
     private readonly AuthDataService _authDataService;
+    private readonly SettingsService _settingsService;
     private readonly ILogger<AuthService> _logger;
-    private LoginServerSettings _loginServerSettings;
+    private LdapSettings _ldapSettings;
     
-    public AuthService(ILogger<AuthService> logger,AuthDataService authDataService,SettingsService settingsService) {
-        this._settingsService = settingsService;
+    public AuthService(ILogger<AuthService> logger,
+        AuthDataService authDataService,
+        SettingsService settingsService) {
         this._authDataService = authDataService;
-        this._loginServerSettings= new LoginServerSettings();
-        this._loginServerSettings.Password = "";
-        this._loginServerSettings.UserName = "";
+        this._settingsService = settingsService;
+        this._ldapSettings= new LdapSettings();
+        this._ldapSettings.Password = "";
+        this._ldapSettings.UserName = "";
         this._logger = logger;
     }
-
+    
     public async Task<CreateAccountResponse> CreateAccount(CreateAccountRequest req) {
         if(string.IsNullOrEmpty(req.Username) || 
            string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Role) 
@@ -62,40 +68,33 @@ public class AuthService {
     private Task<bool> Auth(string username, string password) {
         try {
             using PrincipalContext context = new PrincipalContext(ContextType.Domain,
-                this._loginServerSettings.HostIp,
-                this._loginServerSettings.UserName, 
-                this._loginServerSettings.Password);
+                this._ldapSettings.HostIp,
+                this._ldapSettings.UserName,
+                this._ldapSettings.Password);
             UserPrincipal user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, username);
             if (user != null) {
-                if (context.ValidateCredentials(username,password)) {
-                    this._logger.LogInformation("User authenticated. User: {User}",user.SamAccountName);
+                if (context.ValidateCredentials(username, password)) {
+                    this._logger.LogInformation("User authenticated. User: {User}", user.SamAccountName);
                     return Task.FromResult(true);
                 }
-                this._logger.LogWarning("Login Failed. User: {User}",user.SamAccountName);
+
+                this._logger.LogWarning("Login Failed. User: {User}", user.SamAccountName);
                 return Task.FromResult(true);
             }
-            this._logger.LogWarning("Username not found: {Username}",username);
+
+            this._logger.LogWarning("Username not found: {Username}", username);
             return Task.FromResult(true);
-        }catch(Exception e) {
-            this._logger.LogError(e,"Error authenticating user");
+        } catch (Exception e) {
+            this._logger.LogError(e, "Error authenticating user");
             return Task.FromResult(false);
         }
     }
-
-    public Task<bool> FindDomainUser(string username) {
-        using PrincipalContext context = new PrincipalContext(ContextType.Domain,
-            this._loginServerSettings.HostIp,
-            this._loginServerSettings.UserName, 
-            this._loginServerSettings.Password);
-        UserPrincipal user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, username);
-        return Task.FromResult(user != null);
-    }
     
-    public async Task Logout(ObjectId token) {
+    /*public async Task Logout(ObjectId token) {
         await this._authDataService.Logout(token);
-    }
+    }*/
 
-    public async Task LoadSettings() {
-        this._loginServerSettings= await this._settingsService.GetLatestSettings();
+    public async Task Load() {
+        this._ldapSettings = await this._settingsService.GetLatestSettings();
     }
 }

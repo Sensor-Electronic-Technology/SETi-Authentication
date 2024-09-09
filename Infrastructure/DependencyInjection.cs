@@ -7,6 +7,7 @@ public static class DependencyInjection {
         services.AddSingleton<SettingsService>();
         services.AddSingleton<AuthService>();
         services.AddSingleton<AuthDataService>();
+        //services.AddSingleton<DomainManager>();
         return services;
     }
 }
