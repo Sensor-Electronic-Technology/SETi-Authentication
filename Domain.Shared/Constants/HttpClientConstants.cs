@@ -11,4 +11,6 @@ public static class HttpClientConstants {
     public static string UpdateEmailEndpoint=> "account/email/update";
     public static string UpdateRoleEndpoint => "account/role/update";
     public static string CreateAccountEndpoint => "account/create";
+    
+    public static string GetUsersEndpoint=> "users";
 }

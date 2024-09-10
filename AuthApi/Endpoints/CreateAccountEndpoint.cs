@@ -24,20 +24,3 @@ public class CreateAccountEndpoint:Endpoint<CreateAccountRequest,CreateAccountRe
         await SendAsync(result,cancellation:ct);
     }
 }
-
-public class GetUsersEndpoint:Endpoint<GetUsersRequest,GetUsersResponse> {
-    private readonly AuthDataService _dataService;
-    
-    public GetUsersEndpoint(AuthDataService authDataService) {
-        this._dataService = authDataService;
-    }
-    
-    public override void Configure() {
-        Post($"/api/{HttpClientConstants.CreateAccountEndpoint}");
-        AllowAnonymous();
-    }
-    
-    public override async Task HandleAsync(GetUsersRequest req, CancellationToken ct) {
-        //await SendAsync(result,cancellation:ct);
-    }
-}

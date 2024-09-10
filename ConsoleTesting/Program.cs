@@ -36,7 +36,21 @@ using SETiAuth.Domain.Shared.Contracts.Responses;
 
 //ExportSetiUsers();
 //await CreateUsers();
-await TestGetUsers();
+//await TestGetUsers();
+
+await GetUsersHttpTest();
+
+async Task GetUsersHttpTest() {
+	var client=new HttpClient();
+	client.BaseAddress=new Uri("http://localhost:5243/api/");
+	var response=await client.PostAsJsonAsync($"{HttpClientConstants.GetUsersEndpoint}",new GetUsersRequest() {
+		AuthDomain = "PurchaseRequestSystem",
+		Role = "Approver"
+	});
+	//var users=await response.Content.ReadFromJsonAsync<GetUsersResponse>();
+	Console.WriteLine(response.Content.ReadAsStringAsync().Result);
+}
+
 async Task TestGetUsers() {
 	var client=new MongoClient("mongodb://172.20.3.41:27017");
 	var database=client.GetDatabase("auth_db");
