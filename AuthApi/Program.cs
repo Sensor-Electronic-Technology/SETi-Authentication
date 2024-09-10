@@ -38,5 +38,5 @@ if (logInService != null) {
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseFastEndpoints();
-//app.Urls.Add("http://172.20.4.20:5000");
+app.Urls.Add("http://172.20.4.20:5000");
 app.Run();
