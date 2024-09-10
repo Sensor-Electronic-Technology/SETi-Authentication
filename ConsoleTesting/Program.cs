@@ -35,7 +35,25 @@ using SETiAuth.Domain.Shared.Contracts.Responses;
 //await CreateLdapSettings();
 
 //ExportSetiUsers();
-await CreateUsers();
+//await CreateUsers();
+await TestGetUsers();
+async Task TestGetUsers() {
+	var client=new MongoClient("mongodb://172.20.3.41:27017");
+	var database=client.GetDatabase("auth_db");
+	var collection=database.GetCollection<DomainUserAccount>("domain_accounts");
+	var userAccounts=await collection.Find(e=>e.AuthDomainRoles.ContainsKey("PurchaseRequestSystem") && 
+	                                                             e.AuthDomainRoles["PurchaseRequestSystem"]=="Approver").ToListAsync();
+	var userAccountDtos=userAccounts.Select(u=>new UserAccountDto() {
+		Username   = u._id,
+		Email      = u.Email,
+		Role       = u.AuthDomainRoles["PurchaseRequestSystem"],
+		FirstName = u.FirstName,
+		LastName  = u.LastName
+	}).ToList();
+	foreach (var user in userAccountDtos) {
+		Console.WriteLine($"Username: {user.Username} - Email: {user.Email} - Role: {user.Role}");
+	}
+}
 
 async Task CreateUsers() {
 	var client=new MongoClient("mongodb://172.20.3.41:27017");

@@ -209,6 +209,19 @@ public class AuthDataService {
         var result=await this._domainCollection.UpdateOneAsync(filter, update);
         return result.IsAcknowledged && result.ModifiedCount>0;
     }
+
+    public async Task<List<UserAccountDto>> GetUsers(string authDomain, string role) {
+        var userAccounts=await this._domainAccountCollection.Find(e=>e.AuthDomainRoles.ContainsKey(authDomain) && 
+                                                                     e.AuthDomainRoles[authDomain]==role).ToListAsync();
+        var userAccountDtos=userAccounts.Select(u=>new UserAccountDto() {
+            Username   = u._id,
+            Email      = u.Email,
+            Role       = u.AuthDomainRoles[authDomain],
+            FirstName = u.FirstName,
+            LastName  = u.LastName
+        }).ToList();
+        return userAccountDtos;
+    }
     
     /*public async Task Logout(ObjectId token) {
         var filter=Builders<UserSession>.Filter.Eq(s => s._id, token);
