@@ -97,8 +97,13 @@ public class AuthDataService {
         };
         var userSessionDto = new UserSessionDto() {
             Token = userSession._id.ToString(),
-            Username = userSession.Username,
-            Role = userSession.Role,
+            UserAccount = new UserAccountDto() {
+                Username   = userAccount._id,
+                Email      = userAccount.Email,
+                Role       = role,
+                FirstName = userAccount.FirstName,
+                LastName  = userAccount.LastName
+            }
         };
         await this._userSessionCollection.InsertOneAsync(userSession);
         return userSessionDto;
@@ -122,8 +127,13 @@ public class AuthDataService {
         };
         var userSessionDto = new UserSessionDto() {
             Token = userSession._id.ToString(),
-            Username = userSession.Username,
-            Role = userSession.Role,
+            UserAccount = new UserAccountDto() {
+                Username   = userAccount._id,
+                Email      = userAccount.Email,
+                Role       = userAccount.Role,
+                FirstName = userAccount._id,
+                LastName  = ""
+            }
         };
         await this._userSessionCollection.InsertOneAsync(userSession);
         return userSessionDto;

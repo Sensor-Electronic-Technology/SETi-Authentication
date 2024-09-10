@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>SETiAuth.Domain.Shared</PackageId>
-    <Version>1.3.3</Version>
+    <Version>1.3.5</Version>
     <Authors>Andrew Elmendorf</Authors>
     <Company>Sensor Electronic Technology</Company>
     <PackageDescription>Shared data for authentication</PackageDescription>
