@@ -1,8 +1,8 @@
-cd $env:USERPROFILE\RiderProjects\SetiAuthentication\Domain.Shared
+cd $env:USERPROFILE\RiderProjects\SETi-Authentication\Domain.Shared
 
 [int]$type=0 <#0=patch,1=minor,2=major#>
 
-$csprojfilename = $env:USERPROFILE+"\RiderProjects\SetiAuthentication\Domain.Shared\Domain.Shared.csproj"
+$csprojfilename = $env:USERPROFILE+"\RiderProjects\SETi-Authentication\Domain.Shared\Domain.Shared.csproj"
 "Project file to update " + $csprojfilename
 [xml]$csprojcontents = Get-Content -Path $csprojfilename;
 "Current version number is " + $csprojcontents.Project.PropertyGroup.Version
@@ -21,7 +21,7 @@ switch ($type) {
 dotnet build $csprojfilename --configuration Release
 $newversionNumber = $major.ToString() + "." + $minor.ToString() + "." + $patch.ToString()
 "New version number is " + $newversionNumber
-$outputPath=$env:USERPROFILE+"\RiderProjects\SetiAuthentication\Domain.Shared\bin\Release\SETiAuth.Domain.Shared." + $newversionNumber + ".nupkg"
+$outputPath=$env:USERPROFILE+"\RiderProjects\SETi-Authentication\Domain.Shared\bin\Release\SETiAuth.Domain.Shared." + $newversionNumber + ".nupkg"
 $csprojcontents.Project.PropertyGroup.Version = $newversionNumber
 $csprojcontents.Save($csprojfilename)
 dotnet pack $csprojfilename --configuration Release
