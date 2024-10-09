@@ -38,7 +38,32 @@ using SETiAuth.Domain.Shared.Contracts.Responses;
 //await CreateUsers();
 //await TestGetUsers();
 
-await GetUsersHttpTest();
+//await GetUsersHttpTest();
+
+Console.WriteLine("Creating Generic Users");
+await CreateUser("pr-requester", "PR", "Requester");
+await CreateUser("pr-approver", "PR", "Approver");
+await CreateUser("pr-purchaser", "PR", "Purchaser");
+Console.WriteLine("Completed, Check database");
+
+
+
+async Task CreateUser(string username,string firstName,string role) {
+	var client=new MongoClient("mongodb://172.20.3.41:27017");
+	var database=client.GetDatabase("auth_db");
+	var collection=database.GetCollection<DomainUserAccount>("domain_accounts");
+	DomainUserAccount account = new DomainUserAccount();
+	account._id = username.ToLower();
+	account.Email = "";
+	account.FirstName = firstName;
+	account.LastName = "";
+	account.AuthDomainRoles["PurchaseRequestSystem"] = role;
+	account.IsDomainAccount = true;
+	await collection.InsertOneAsync(account);
+	Console.WriteLine($"Account inserted: {account._id}");
+}
+
+
 
 async Task GetUsersHttpTest() {
 	var client=new HttpClient();
